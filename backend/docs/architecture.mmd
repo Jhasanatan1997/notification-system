@@ -1,0 +1,21 @@
+flowchart LR
+  A[Client / Service] -->|POST /notifications| B[Notification API (Express)]
+  B --> C[(MongoDB)]
+  B --> D[(Redis / BullMQ)]
+  D --> E[Worker Process]
+  E --> C
+  E --> F[Providers]
+  F --> SG[SendGrid]
+  F --> TW[Twilio]
+  F --> FCM[Firebase Cloud Messaging]
+  F --> IN[In-app (Logs/DB)]
+
+  subgraph Observability
+    C --> L[Notification Logs]
+    D --> Q[Queue Metrics]
+  end
+
+  subgraph AI
+    B --> OAI[OpenAI API]
+  end
+
