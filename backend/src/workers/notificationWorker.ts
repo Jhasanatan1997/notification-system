@@ -1,4 +1,4 @@
-import { Worker, QueueEvents, Job } from "bullmq";
+import { Worker, Queue, QueueEvents, Job } from "bullmq";
 import { JOB_DELIVER_NOTIFICATION, QUEUE_NOTIFICATIONS } from "../queues/names.js";
 import { NotificationModel } from "../models/Notification.js";
 import { logger } from "../config/logger.js";
@@ -37,6 +37,8 @@ export function startNotificationWorker() {
     { connection: { url: env.redisUrl }, concurrency: 50 }
   );
 
+  const queue = new Queue(QUEUE_NOTIFICATIONS, { connection: { url: env.redisUrl } });
+
   worker.on("completed", (job) => {
     logger.info({ jobId: job.id }, "Job completed");
   });
@@ -46,7 +48,7 @@ export function startNotificationWorker() {
 
   const events = new QueueEvents(QUEUE_NOTIFICATIONS, { connection: { url: env.redisUrl } });
   events.on("failed", async ({ jobId, failedReason }) => {
-    const job = await worker.getJob(jobId);
+    const job = await queue.getJob(jobId);
     if (!job) return;
     const attemptsMade = job.attemptsMade;
     const total = job.opts.attempts ?? 1;
